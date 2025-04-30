@@ -63,7 +63,10 @@ int main()
 	 /*************************** 初始化DRM显示 *********************************/
     DrmDisplay drm;
     try {
-        drm.Init(IMAGE_WIDTH, IMAGE_HEIGHT, DRM_FORMAT_NV12); // 使用NV12格式
+        //drm.Init(IMAGE_WIDTH, IMAGE_HEIGHT, DRM_FORMAT_NV12); // 使用NV12格式
+    	drm.InitRed();
+	drm.DisplayRed();
+	sleep(10);
     } catch (const std::exception &e) {
         std::cerr << "DRM初始化失败: " << e.what() << std::endl;
         return -1;
