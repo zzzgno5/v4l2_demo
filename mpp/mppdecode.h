@@ -43,7 +43,9 @@ public:
 
 	void set_out_file_name(char *path);
 	
-	
+        uint8_t* get_decoded_frame() const;
+        size_t get_decoded_size() const;
+
 private:
 	//宏定义
 	#define MPP_ALIGN(x, a)   (((x)+(a)-1)&~((a)-1))
@@ -76,6 +78,8 @@ private:
 
 	char fileName[256]  = {0};
 	FILE *outPutFile = NULL;
+        RK_U32 width;
+        RK_U32 height;
 
 };
 

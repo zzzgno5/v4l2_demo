@@ -54,6 +54,50 @@ mppDecode::~mppDecode()
 
 }
 
+uint8_t* mppDecode::get_decoded_frame() const {
+    if (!frame || !frmBuf) {
+        return nullptr;
+    }
+    
+    // 获取帧信息
+    RK_U32 width = mpp_frame_get_width(frame);
+    RK_U32 height = mpp_frame_get_height(frame);
+    MppBuffer buffer = mpp_frame_get_buffer(frame);
+    
+    if (!buffer) {
+        return nullptr;
+    }
+    
+    // 返回YUV数据指针
+    return (uint8_t*)mpp_buffer_get_ptr(buffer);
+}
+
+size_t mppDecode::get_decoded_size() const {
+    if (!frame) return 0;
+    
+    RK_U32 width = mpp_frame_get_width(frame);
+    RK_U32 height = mpp_frame_get_height(frame);
+    MppFrameFormat fmt = mpp_frame_get_fmt(frame);
+    
+    // 根据格式计算大小
+    switch (fmt) {
+        case MPP_FMT_YUV420SP:  // NV12
+        case MPP_FMT_YUV420P:   // YUV420P
+            return width * height * 3 / 2;
+        case MPP_FMT_YUV422SP:
+        case MPP_FMT_YUV422P:
+            return width * height * 2;
+        case MPP_FMT_YUV444SP:
+        case MPP_FMT_YUV444P:
+            return width * height * 3;
+        case MPP_FMT_YUV400:    // 灰度图
+            return width * height;
+        default:
+            return 0;
+    }
+}
+
+
 void mppDecode::set_out_file_name(char *path)
 {
 	memset(fileName ,0, sizeof(fileName));
@@ -123,7 +167,7 @@ int mppDecode::init_packet_and_frame(int width, int height)
     
 
 	int ret;
-	ret = mpp_buffer_group_get_internal(&frmGrp, MPP_BUFFER_TYPE_ION);
+	ret = mpp_buffer_group_get_internal(&frmGrp, MPP_BUFFER_TYPE_DRM);
 	if(ret)
 	{
 		MPP_ERR("frmGrp mpp_buffer_group_get_internal erron (%d)\r\n",ret);

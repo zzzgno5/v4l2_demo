@@ -17,7 +17,7 @@
 
 #include "V4l2.h"
 #include "mppdecode.h"
-
+#include "DrmDisplay.h"
 
 //宏定义
 #define IMAGE_WIDTH  1920
@@ -58,6 +58,16 @@ int main()
 		fpsNum = 10;
 	}
 	printf("fpsNum:%d\r\n",fpsNum);
+
+
+	 /*************************** 初始化DRM显示 *********************************/
+    DrmDisplay drm;
+    try {
+        drm.Init(IMAGE_WIDTH, IMAGE_HEIGHT, DRM_FORMAT_NV12); // 使用NV12格式
+    } catch (const std::exception &e) {
+        std::cerr << "DRM初始化失败: " << e.what() << std::endl;
+        return -1;
+    }	
     
 	/*************************** 启动MJPEG解码 *********************************/
 	mppDecode *mppDec = new mppDecode;
@@ -104,11 +114,27 @@ int main()
 
 		char *dataAddr = (char *)mV4l2BufUnit->start;
 		ret = mppDec->decode(dataAddr,mV4l2BufUnit->length, 0);
-		if(ret < 0)
+		if (ret >= 0)
+		{
+   			// 获取解码后的NV12数据
+			    uint8_t* yuv_data = mppDec->get_decoded_frame();
+			    size_t yuv_size = mppDec->get_decoded_size();
+				   if (yuv_data && yuv_size > 0) {
+		        // 现在可以将yuv_data传递给DRM显示
+        			drm.DisplayFrame(yuv_data);
+        
+       			 // 或者保存到文件（调试用）
+		        // FILE* fp = fopen("frame.nv12", "wb");
+       			 // fwrite(yuv_data, 1, yuv_size, fp);
+        		// fclose(fp);
+   			 }
+		}
+		else
 		{
 			printf("decode erron");
 			usleep(500*1000);
 		}
+
 
 		ret = v4l2_qbuf(cameraDevFd, mV4l2BufUnit);
         if(ret < 0)
